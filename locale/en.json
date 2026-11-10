@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Thinking channel guard",
+    "description": "Puts reasoning that leaked into the answer back into the thinking channel, and surfaces a reply that was stranded in thinking."
+  }
+}

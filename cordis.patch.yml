@@ -1,0 +1,6 @@
+# Inserts the thinking-channel guard as a host plugin. It wraps every streaming
+# model call and is transparent unless it recognizes a channel defect.
+- insert:
+    - id: thinking-channel-guard
+      name: dsh-thinking-channel-guard
+      config: {}

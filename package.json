@@ -1,0 +1,59 @@
+{
+  "name": "dsh-thinking-channel-guard",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "把漏进正文的思考收回思考通道，并把整段写进思考里的回答显示为答复；DeepSeek Harness 的 llm/stream 通道修复插件。",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis",
+    "thinking",
+    "reasoning",
+    "stream"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "laoyingfuhuole",
+    "url": "https://github.com/laoyingfuhuole"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laoyingfuhuole/dsh-thinking-channel-guard.git"
+  },
+  "homepage": "https://github.com/laoyingfuhuole/dsh-thinking-channel-guard#readme",
+  "bugs": {
+    "url": "https://github.com/laoyingfuhuole/dsh-thinking-channel-guard/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "integrity.json"
+  ],
+  "scripts": {
+    "test": "node --test test/",
+    "integrity": "node scripts/integrity.mjs",
+    "check:integrity": "node scripts/integrity.mjs --check",
+    "check": "npm test && npm run check:integrity"
+  },
+  "engines": {
+    "node": ">=22.19",
+    "dsh": ">=0.2.2-rc.1 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
