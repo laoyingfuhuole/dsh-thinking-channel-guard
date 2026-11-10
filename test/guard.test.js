@@ -135,6 +135,64 @@ test('a real leaked Kimi turn moves its reasoning out of the answer', async () =
   assert.equal(after.finish.replayState, undefined, 'repaired streams drop stale replay metadata');
 });
 
+test('a lowercase continuation after a dangling function word is moved to reasoning', async () => {
+  const out = await run([
+    { type: 'block-start', index: 0, blockType: 'reasoning' },
+    { type: 'reasoning-delta', index: 0, text: '- 1 Business panorama and cross-module flow, perhaps' },
+    { type: 'block-end', index: 0, block: { type: 'reasoning', text: '- 1 Business panorama and cross-module flow, perhaps' } },
+    { type: 'block-start', index: 1, blockType: 'text' },
+    { type: 'text-delta', index: 1, text: '\ntable with 8 steps and states.' },
+    { type: 'block-end', index: 1, block: { type: 'text', text: '\ntable with 8 steps and states.' } },
+  ]);
+  assert.deepEqual(assemble(out).blocks, [
+    { type: 'reasoning', text: '- 1 Business panorama and cross-module flow, perhaps' },
+    { type: 'reasoning', text: '\ntable with 8 steps and states.' },
+  ]);
+});
+
+test('a lowercase continuation after a CJK fragment is moved to reasoning', async () => {
+  const out = await run([
+    { type: 'block-start', index: 0, blockType: 'reasoning' },
+    { type: 'reasoning-delta', index: 0, text: 'P03-04 P18 zero consumption direct no分摊' },
+    { type: 'block-end', index: 0, block: { type: 'reasoning', text: 'P03-04 P18 zero consumption direct no分摊' } },
+    { type: 'block-start', index: 1, blockType: 'text' },
+    { type: 'text-delta', index: 1, text: 'perhaps fully消缺? P03-04 old zero denominator.' },
+    { type: 'block-end', index: 1, block: { type: 'text', text: 'perhaps fully消缺? P03-04 old zero denominator.' } },
+  ]);
+  assert.deepEqual(assemble(out).blocks.map((block) => block.type), ['reasoning', 'reasoning']);
+});
+
+test('a lowercase answer after a complete reasoning word stays in the answer channel', async () => {
+  const chunks = [
+    { type: 'block-start', index: 0, blockType: 'reasoning' },
+    { type: 'reasoning-delta', index: 0, text: 'thinking' },
+    { type: 'block-end', index: 0, block: { type: 'reasoning', text: 'thinking' } },
+    { type: 'block-start', index: 1, blockType: 'text' },
+    { type: 'text-delta', index: 1, text: 'answer' },
+    { type: 'block-end', index: 1, block: { type: 'text', text: 'answer' } },
+  ];
+  const out = await run(chunks);
+  assert.deepEqual(out, chunks);
+});
+
+test('a real channel flip with a lowercase head is moved to reasoning (turn 22 step 10)', async () => {
+  const { chunks } = fixture('leak-22-10');
+  const out = await run(chunks);
+  const after = assemble(out);
+  const text = after.blocks.filter((block) => block.type === 'text').map((block) => block.text).join('');
+  assert.equal(text.includes('perhaps fully'), false, 'leaked plan text must leave the answer channel');
+  assert.equal(after.blocks.filter((block) => block.type === 'reasoning').length, 2);
+});
+
+test('a real channel flip with a lowercase head is moved to reasoning (turn 22 step 13)', async () => {
+  const { chunks } = fixture('leak-22-13');
+  const out = await run(chunks);
+  const after = assemble(out);
+  const text = after.blocks.filter((block) => block.type === 'text').map((block) => block.text).join('');
+  assert.equal(text.includes('table with 8 steps'), false);
+  assert.ok(after.blocks.filter((block) => block.type === 'reasoning').length >= 2);
+});
+
 test('a healthy DeepSeek turn passes through byte-for-byte', async () => {
   const { chunks } = fixture('healthy-1-1');
   const out = await run(chunks);
