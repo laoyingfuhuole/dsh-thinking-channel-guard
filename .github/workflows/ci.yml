@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Test
-        run: node --test test/
+        run: node --test
       - name: Integrity manifest
         run: node scripts/integrity.mjs --check
       - name: Pack inventory
