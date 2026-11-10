@@ -4,7 +4,7 @@
 
 思考与回答错位不是渲染问题。DSH 只按 provider 上报的 `blockType` 决定一段内容进"回答"还是进"思考"区，因此 provider 送错通道时，错的内容会原样入库、原样回放、原样显示。本插件挂在 `llm/stream` 瀑布最外层，改的是**流里的通道标记**，所以界面、会话记录和之后每一次 replay 看到的是同一份修好的数据。
 
-> 状态：`v1.0.0`，本机回放 63 个会话 / 5,834 条已记录助手消息，修复 51 条、**0 次块重排**、其余逐字节一致。
+> 状态：`v1.0.1`，本机回放 63 个会话 / 5,834 条已记录助手消息，修复 51 条、**0 次块重排**、其余逐字节一致。
 
 ## 它修的三类问题
 
@@ -34,7 +34,7 @@
 插件市场（本机 profile）：
 
 ```text
-github:laoyingfuhuole/dsh-thinking-channel-guard#v1.0.0
+github:laoyingfuhuole/dsh-thinking-channel-guard#v1.0.1
 ```
 
 或用插件管理器指向工作区目录（开发时）：
@@ -81,7 +81,7 @@ plugin_manager({ action: "install_bundle", target: "/path/to/dsh-thinking-channe
 ## 证据
 
 - `node --test test/`：20 个用例，覆盖真实漏例（Kimi 两例、本会话中途翻转一例）、健康 DeepSeek 轮次逐字节透传、仅工具调用轮次逐字节透传、四条规则的开关与边界、`dryRun`、流中断、未知 chunk 类型。
-- 全库回放（`scripts/audit.mjs` 需本机会话库）：5,834 条消息里修复 51 条，0 次块重排，其余逐字节一致。
+- 全库回放：`node scripts/audit.mjs <已解压的会话目录>`（需本机会话库）：5,834 条消息里修复 51 条，0 次块重排，其余逐字节一致。
 - 发布物校验：`npm run check:integrity` 对照 `integrity.json` 校验每个发布文件；CI 在 Node 22 / 24 上跑测试 + 校验 + `npm pack --dry-run`。
 
 ## 限制
