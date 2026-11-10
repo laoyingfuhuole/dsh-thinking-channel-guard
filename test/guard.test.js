@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { classifyLeading, guardStream, stripMarkup } from '../lib/guard.js';
+import { GUARD_VERSION, classifyLeading, guardStream, stripMarkup } from '../lib/guard.js';
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
@@ -309,4 +309,10 @@ test('the continuation rule can be switched off', async () => {
   const out = await run(chunks, { rules: { continuationRouting: false } });
   const after = assemble(out);
   assert.ok(after.blocks.some((block) => block.type === 'text'));
+});
+
+
+test('the build marker matches the shipped manifest', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(GUARD_VERSION, pkg.version);
 });
