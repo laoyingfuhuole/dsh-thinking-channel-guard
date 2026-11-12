@@ -4,7 +4,7 @@
 
 思考与回答错位不是渲染问题。DSH 只按 provider 上报的 `blockType` 决定一段内容进"回答"还是进"思考"区，因此 provider 送错通道时，错的内容会原样入库、原样回放、原样显示。本插件挂在 `llm/stream` 瀑布最外层，改的是**流里的通道标记**，所以界面、会话记录和之后每一次 replay 看到的是同一份修好的数据。
 
-> 状态：`v1.1.0`，本机回放 78 个会话 / 6,779 条已记录助手消息，修复 67 条、**0 次块重排**、其余逐字节一致。
+> 状态：`v1.2.0`，本机回放 82 个会话 / 7,827 条已记录助手消息，修复 73 条、**0 次块重排**、其余逐字节一致。
 
 ## 它修的三类问题
 
@@ -22,6 +22,7 @@
 | --- | --- | --- |
 | `tagRouting` | 开 | 以思考标记开头的正文块整块改发为 reasoning |
 | `continuationRouting` | 开 | 接着上一段思考往下写的正文块整块改发为 reasoning（句末悬空在中英断句处、或正文以小写英文词起头续写） |
+| `deliberationRouting` | 开 | 中文会话里，中段紧跟工具调用、纯英文、≥200 字、整段推敲口气的正文块改发为 reasoning（句子开头没留任何接续痕迹的漏例） |
 | `stripTags` | 开 | 只对**刚被改判**的块去掉标记；可见正文永不改写，哪怕正文里正在引用 `<thinking>` 字样 |
 | `answerRescue` | 开 | 回答整段留在思考通道时补发一份正文；思考行保留原文，回答不会丢 |
 
@@ -57,6 +58,7 @@ plugin_manager({ action: "install_bundle", target: "/path/to/dsh-thinking-channe
   "rules": {
     "tagRouting": true,
     "continuationRouting": true,
+    "deliberationRouting": true,
     "stripTags": true,
     "answerRescue": true
   },
@@ -82,8 +84,8 @@ plugin_manager({ action: "install_bundle", target: "/path/to/dsh-thinking-channe
 
 ## 证据
 
-- `node --test`：26 个用例，覆盖真实漏例（Kimi 两例、本会话中途翻转一例、feishu 会话小写续写两例）、健康 DeepSeek 轮次逐字节透传、仅工具调用轮次逐字节透传、四条规则的开关与边界、`dryRun`、流中断、未知 chunk 类型。
-- 全库回放：`node scripts/audit.mjs <已解压的会话目录>`（需本机会话库）：6,779 条消息里修复 67 条（64 条标记整块改道 + 3 条无标记续写改道），0 次块重排，其余逐字节一致。
+- `node --test`：32 个用例，覆盖真实漏例（Kimi 标记两例、本会话中途翻转一例、feishu 小写续写两例、英文推敲三例）、合法过程叙述对照两例、含中文长正文对照一例、英文会话对照一例、健康 DeepSeek 轮次逐字节透传、仅工具调用轮次逐字节透传、五条规则的开关与边界、`dryRun`、流中断、未知 chunk 类型。
+- 全库回放：`node scripts/audit.mjs <已解压的会话目录>`（需本机会话库）：7,827 条消息里修复 73 条（64 条标记改道 + 3 条无标记续写 + 6 条英文推敲），0 次块重排，其余逐字节一致。
 - 发布物校验：`npm run check:integrity` 对照 `integrity.json` 校验每个发布文件；CI 在 Node 22 / 24 上跑测试 + 校验 + `npm pack --dry-run`。
 
 ## 限制
@@ -95,7 +97,7 @@ plugin_manager({ action: "install_bundle", target: "/path/to/dsh-thinking-channe
 ## 开发
 
 ```bash
-node --test                # 26 个用例
+node --test                # 32 个用例
 npm run integrity          # 重新生成 integrity.json
 npm run check              # 测试 + 完整性校验
 npm pack --dry-run         # 查看发布物

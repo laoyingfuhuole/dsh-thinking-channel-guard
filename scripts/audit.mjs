@@ -12,7 +12,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { GUARD_VERSION, guardStream } from '../lib/guard.js';
+import { GUARD_VERSION, conversationIsCjk, guardStream } from '../lib/guard.js';
 
 /** Expand an accumulator stream record into per-delta chunks. */
 function expand(stream) {
@@ -117,6 +117,8 @@ let repaired = 0;
 let reordered = 0;
 
 for (const file of files) {
+  /** Recent substantive user messages, newest last: the language signal. */
+  const userTexts = [];
   for (const line of readFileSync(file, 'utf8').split('\n')) {
     if (line.trim() === '') continue;
     let record;
@@ -126,6 +128,21 @@ for (const file of files) {
       continue;
     }
     const data = record.data;
+    if (record.type === 'user/message') {
+      const body = data?.message ?? data;
+      const content = body?.content;
+      const text = typeof content === 'string'
+        ? content
+        : (Array.isArray(content)
+          ? content.filter((part) => part?.type === 'text' || part?.type === 'input_text')
+            .map((part) => (typeof part.text === 'string' ? part.text : '')).join(' ')
+          : '');
+      if (text.trim().length >= 20) {
+        userTexts.push(text);
+        if (userTexts.length > 4) userTexts.shift();
+      }
+      continue;
+    }
     if (record.type !== 'assistant/message' || !Array.isArray(data?.message?.content)) continue;
     messages += 1;
     if (!Array.isArray(data.stream) || data.stream.length === 0) continue;
@@ -137,7 +154,8 @@ for (const file of files) {
     const source = (async function* replay() {
       for (const chunk of chunks) yield chunk;
     })();
-    for await (const chunk of guardStream(source, { onRepair: (repair) => repairs.push(repair) })) out.push(chunk);
+    const userCjk = conversationIsCjk(userTexts.map((text) => ({ role: 'user', content: text })));
+    for await (const chunk of guardStream(source, { userCjk, onRepair: (repair) => repairs.push(repair) })) out.push(chunk);
     const after = assemble(out);
     const key = (blocks) => JSON.stringify(blocks);
     if (key(before) === key(after)) continue;

@@ -370,6 +370,63 @@ test('the continuation rule can be switched off', async () => {
 });
 
 
+test('mid-turn English deliberation in a CJK conversation is moved to reasoning', async () => {
+  const { chunks } = fixture('leak-2026-11-12');
+  const out = await run(chunks, { userCjk: true });
+  const after = assemble(out);
+  assert.deepEqual(after.blocks.map((block) => block.type), ['reasoning', 'reasoning', 'tool-call']);
+  assert.match(after.blocks[1].text, /file doesn't exist/);
+});
+
+test('the same call keeps its text channel when the user writes English', async () => {
+  const { chunks } = fixture('leak-2026-11-12');
+  const out = await run(chunks, { userCjk: false });
+  const after = assemble(out);
+  assert.deepEqual(after.blocks.map((block) => block.type), ['reasoning', 'text', 'tool-call']);
+});
+
+test('deliberation with no reasoning block is caught by its phrasing', async () => {
+  const { chunks } = fixture('leak-18-22');
+  const out = await run(chunks, { userCjk: true });
+  const after = assemble(out);
+  assert.deepEqual(after.blocks.map((block) => block.type), ['reasoning', 'tool-call']);
+});
+
+test('a long mid-turn answer that carries CJK stays visible', async () => {
+  const { chunks } = fixture('leak-university-4-1');
+  const answer = [
+    '这是一段很长的且以英文为主但有中文的回复，用来确认规则不会动带中文的正文。'.repeat(3),
+  ].join('');
+  const synthetic = [
+    { type: 'block-start', index: 0, blockType: 'reasoning' },
+    { type: 'reasoning-delta', index: 0, text: 'Let me think about the numbers.' },
+    { type: 'block-end', index: 0, block: { type: 'reasoning', text: 'Let me think about the numbers.' } },
+    { type: 'block-start', index: 1, blockType: 'text' },
+    { type: 'text-delta', index: 1, text: answer },
+    { type: 'block-end', index: 1, block: { type: 'text', text: answer } },
+    { type: 'block-start', index: 2, blockType: 'tool-call' },
+    { type: 'block-end', index: 2, block: { type: 'tool-call', callId: 'c', name: 'read', input: {} } },
+  ];
+  const out = await run(synthetic, { userCjk: true });
+  assert.deepEqual(assemble(out).blocks.map((block) => block.type), ['reasoning', 'text', 'tool-call']);
+  assert.equal(chunks.length > 0, true);
+});
+
+test('short mid-turn narration is left alone', async () => {
+  for (const name of ['narration-b2849c77-3-4', 'narration-2cba5937-1-11']) {
+    const { chunks } = fixture(name);
+    const out = await run(chunks, { userCjk: true });
+    const after = assemble(out);
+    assert.ok(after.blocks.some((block) => block.type === 'text'), name);
+  }
+});
+
+test('the deliberation rule can be switched off', async () => {
+  const { chunks } = fixture('leak-2026-11-12');
+  const out = await run(chunks, { userCjk: true, rules: { deliberationRouting: false } });
+  assert.ok(assemble(out).blocks.some((block) => block.type === 'text'));
+});
+
 test('the build marker matches the shipped manifest', () => {
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(GUARD_VERSION, pkg.version);

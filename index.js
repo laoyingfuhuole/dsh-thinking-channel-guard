@@ -8,7 +8,7 @@
  * ```json
  * {
  *   "version": 1,
- *   "rules": { "tagRouting": true, "continuationRouting": true, "stripTags": true, "answerRescue": true },
+ *   "rules": { "tagRouting": true, "continuationRouting": true, "deliberationRouting": true, "stripTags": true, "answerRescue": true },
  *   "dryRun": false,
  *   "trace": false,
  *   "sessions": { "session-xxxx": { "answerRescue": false } }
@@ -22,7 +22,7 @@
 import { appendFileSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { DEFAULT_RULES, GUARD_VERSION, guardStream } from './lib/guard.js';
+import { DEFAULT_RULES, GUARD_VERSION, conversationIsCjk, guardStream } from './lib/guard.js';
 
 /** Configuration file name inside the Harness home directory. */
 const CONFIG_NAME = 'thinking-channel-guard.json';
@@ -129,9 +129,16 @@ export function apply(ctx, _config) {
         settings = { rules: { ...DEFAULT_RULES }, dryRun: false, trace: false };
       }
       const repairs = [];
+      let userCjk = false;
+      try {
+        userCjk = conversationIsCjk(options.messages);
+      } catch {
+        userCjk = false;
+      }
       const stream = guardStream(next(), {
         rules: settings.rules,
         dryRun: settings.dryRun,
+        userCjk,
         onRepair: (repair) => {
           repairs.push(repair);
         },
