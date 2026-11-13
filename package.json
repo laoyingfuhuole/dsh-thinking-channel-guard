@@ -1,6 +1,6 @@
 {
   "name": "dsh-thinking-channel-guard",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
   "description": "把漏进正文的思考收回思考通道：DeepSeek Harness 的 llm/stream 通道修复插件",
   "keywords": [

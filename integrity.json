@@ -1,18 +1,18 @@
 {
   "schema": 1,
   "name": "dsh-thinking-channel-guard",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "files": {
     "CHANGELOG.md": "2d31b16c32f5b5fafc523b2d11f8d689e25af1795062feb97a6f53d91196e867",
     "LICENSE": "671bed569861c1dc964d0c77f5594b7328700ab1374ea3e3340aadfd21eea848",
-    "README.md": "7763820961ed20b9c0b77716a7339d186c6e17e40084131880072dd878806ad6",
+    "README.md": "a361ecb48a7edeeaf8c84cce2d3d0decd0b80ade2526662a5cd60b7e79c6f728",
     "cordis.patch.yml": "966d6f0980f1b706f5d2655ac02a235a49ce06e82028b787d6eee18cefb0d6b3",
     "icon.svg": "cea9dd238e8e75f097f70e345a4d9b3818a339f0b5585b1a2ab1bd567a3453ab",
     "index.js": "000ef3f0c1b90dfccc18d4ed519416eb24472a9e6d2dbd4ba33dcdbbc00ea9ce",
-    "lib/guard.js": "d5448e2765fe4f4ba7a273b9c094fbf10cbefd0e1bece9f08f955d85799bc1f7",
+    "lib/guard.js": "f5a2585616e12ba9d3579cc67315739911f89f14bca60dd2624a0c8c24359648",
     "locale/en.json": "bfe5ba314e0ad4193423b83d4d8d3a821111c51efd744b2478ef54b1d1143784",
     "locale/zh.json": "6e79391a2acd47c58e51784ba7b52c74151d354d0ad9fedf93d2dc11f0eda213",
-    "package.json": "06d5f1d4cdcc8b80eb508f568c896a2106c0150c68711136e68b486af66634ac",
+    "package.json": "1685ab5b24f709b820b2286a50d8e25cce1fb16d786f0b80cdcdd2cd4636abbc",
     "scripts/audit.mjs": "330996c58d016ec75c429143e9ff2ec4d6d0f26b270b84265e3feae5f6ea67d2",
     "scripts/integrity.mjs": "acfeb9d512159924384ae9fe7ef2046c86bb53a1f489cb96e0f38df0a0e4ed2a"
   }

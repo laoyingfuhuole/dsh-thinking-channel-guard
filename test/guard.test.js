@@ -364,9 +364,13 @@ test('the continuation rule leaves a lowercase answer after a finished sentence 
 
 test('the continuation rule can be switched off', async () => {
   const { chunks } = fixture('leak-1-97');
-  const out = await run(chunks, { rules: { continuationRouting: false } });
-  const after = assemble(out);
-  assert.ok(after.blocks.some((block) => block.type === 'text'));
+  const repairs = [];
+  await run(chunks, { rules: { continuationRouting: false }, onRepair: (repair) => repairs.push(repair.kind) });
+  assert.ok(!repairs.includes('reasoning-continuation'), 'continuation rule stayed quiet');
+  // The same body still trips the deliberation rule, so switch that off too to see
+  // the untouched block in the text channel.
+  const untouched = await run(chunks, { rules: { continuationRouting: false, deliberationRouting: false } });
+  assert.ok(assemble(untouched).blocks.some((block) => block.type === 'text'));
 });
 
 
@@ -425,6 +429,33 @@ test('the deliberation rule can be switched off', async () => {
   const { chunks } = fixture('leak-2026-11-12');
   const out = await run(chunks, { userCjk: true, rules: { deliberationRouting: false } });
   assert.ok(assemble(out).blocks.some((block) => block.type === 'text'));
+});
+
+test('mixed-script deliberation is moved without a language hint', async () => {
+  for (const name of ['leak-qwen-2-16', 'leak-qwen-2-50']) {
+    const { chunks } = fixture(name);
+    const out = await run(chunks, { userCjk: false });
+    const after = assemble(out);
+    assert.ok(after.blocks.every((block) => block.type !== 'text'), name);
+    assert.ok(after.blocks.some((block) => block.type === 'reasoning'), name);
+    assert.ok(after.blocks.some((block) => block.type === 'tool-call'), name);
+  }
+});
+
+test('a mixed-script answer with no deliberation phrasing stays visible', async () => {
+  const body = `本期报表口径已更新，其中 "settlement month" 与 "meter reading cycle" 按新规则对齐。${'后续条款保持原文表述。'.repeat(12)}`;
+  const chunks = [
+    { type: 'block-start', index: 0, blockType: 'reasoning' },
+    { type: 'reasoning-delta', index: 0, text: 'Check the report wording.' },
+    { type: 'block-end', index: 0, block: { type: 'reasoning', text: 'Check the report wording.' } },
+    { type: 'block-start', index: 1, blockType: 'text' },
+    { type: 'text-delta', index: 1, text: body },
+    { type: 'block-end', index: 1, block: { type: 'text', text: body } },
+    { type: 'block-start', index: 2, blockType: 'tool-call' },
+    { type: 'block-end', index: 2, block: { type: 'tool-call', callId: 'c', name: 'read', input: {} } },
+  ];
+  const out = await run(chunks, { userCjk: true });
+  assert.deepEqual(assemble(out).blocks.map((block) => block.type), ['reasoning', 'text', 'tool-call']);
 });
 
 test('the build marker matches the shipped manifest', () => {
